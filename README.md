@@ -1,6 +1,6 @@
 # Sudoku
 
-A quiet Sudoku game for iPhone. Every new game is generated on the device, has one solution, and stays on the phone. There are no accounts, streaks, or purchases.
+A quiet Sudoku game for iPhone. Every new game is generated on the device, has one solution, and stays on the phone. There are no accounts and no streaks. Optional puzzle packs are bought with Apple In-App Purchase. The generator on the home screen stays free.
 
 ## Play
 
@@ -31,7 +31,7 @@ The puzzle engine has no UI dependency. From the repository root:
 swift test
 ```
 
-That covers unique generation, validation, pencil marks, undo and redo, and hints. In Xcode, Product > Test runs the same files inside the `SudokuTests` target.
+That covers unique generation, validation, pencil marks, undo and redo, hints, pack puzzles, and the pack server. In Xcode, Product > Test runs the game tests inside the `SudokuTests` target. `swift test` also runs `SudokuServerTests`.
 
 ## Layout
 
@@ -45,6 +45,42 @@ Difficulty follows the hardest step the logical solver actually needs:
 - Expert still has one solution, and those steps are not enough.
 
 Generation is deterministic for a seed. The app picks a random seed for each new game.
+
+## Puzzle packs
+
+Packs are digital content, so the app uses StoreKit 2. There is no Stripe checkout and no link out to a payment page. The project does not contain an App Store Connect product, a signing team, or a paid capability.
+
+The scheme points at `Sudoku/Products.storekit`. In Xcode, run on an iPhone simulator and the store uses those local products. No real charge is made.
+
+1. Start the pack server (below) on the Mac.
+2. Run the app. The simulator reaches the Mac at `http://127.0.0.1:8787`.
+3. Open Puzzle packs, buy Quiet Start, Hard Lines, or Long Night, and choose a puzzle.
+4. Restore purchases asks StoreKit for entitlements already on this Apple ID, then downloads any pack that is not on the phone yet.
+
+If the server is down, a pack that is already downloaded still opens. StoreKit remains the record of ownership. A purchase that has not downloaded yet stays unfinished until the server can deliver it, and `Transaction.updates` tries again. Change the server address in Settings. `http` is only accepted for `127.0.0.1` and `localhost`.
+
+### Pack server
+
+The server is a small Swift program in `Server/`. It is not Vapor or Hummingbird: four JSON routes do not need that stack, and the tests run with the same toolchain as the engine. It does not take payment. It checks the signed StoreKit transaction and then sends the puzzles.
+
+```sh
+swift test --filter SudokuServerTests
+swift run SudokuServer
+```
+
+`swift run` listens on `http://127.0.0.1:8787`. `PORT` changes the port. Granted transactions are recorded in `data/entitlements.json`, which is gitignored.
+
+`SUDOKU_IAP_MODE` defaults to `dev`. Dev mode accepts Xcode StoreKit configuration transactions (`"environment":"Xcode"`) after checking the JWS shape, bundle id `com.brianbancroft.sudoku`, a known product id, and that the purchase is not revoked. That is not Apple's production signature. Do not put this process on the public internet.
+
+`SUDOKU_IAP_MODE=production` rejects Xcode transactions and refuses Sandbox and Production transactions until verification is configured outside the repo. No Apple key is committed.
+
+### What real App Store sales need later
+
+- An Apple Developer Program membership, a signing team chosen only on your Mac, and a bundle id that matches `com.brianbancroft.sudoku`.
+- Paid Apps agreement, tax, and banking in App Store Connect.
+- Three non-consumable products with the same ids as `Products.storekit`: `com.brianbancroft.sudoku.pack.starter`, `com.brianbancroft.sudoku.pack.hard`, and `com.brianbancroft.sudoku.pack.expert`.
+- A hosted copy of this server with `SUDOKU_IAP_MODE=production`. Verify each JWS with Apple's App Store Server API (Get Transaction Info), using an issuer id, a key id, and a `.p8` that stays out of the repo. Or check the certificate chain in the JWS against Apple Root CA - G3.
+- The phone's Settings field pointed at that `https` host.
 
 ## Settings
 

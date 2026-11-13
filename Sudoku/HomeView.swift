@@ -8,6 +8,7 @@ struct HomeView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
                     header
+                    packsLink
                     if let game = store.game {
                         continueCard(game)
                     }
@@ -43,6 +44,36 @@ struct HomeView: View {
         }
     }
 
+    private var packsLink: some View {
+        NavigationLink(value: AppRoute.packs) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Puzzle packs")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(Palette.ink)
+                    Text("Optional sets from the App Store")
+                        .font(.subheadline)
+                        .foregroundStyle(Palette.muted)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Palette.ink)
+                    .accessibilityHidden(true)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+            .background(Palette.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(Palette.line, lineWidth: 1)
+            }
+        }
+        .buttonStyle(PressOpacityStyle())
+        .accessibilityHint("Opens packs you can buy with the App Store. The free generator stays on this screen.")
+    }
+
     private func continueCard(_ game: SudokuGame) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 4) {
@@ -73,6 +104,9 @@ struct HomeView: View {
     }
 
     private func progressLine(_ game: SudokuGame) -> String {
+        if let pack = store.packContext {
+            return "\(pack.packName) · \(pack.puzzleTitle) · \(store.formattedTime())"
+        }
         let open = game.remainingCells == 1 ? "1 cell open" : "\(game.remainingCells) cells open"
         return "\(game.puzzle.difficulty.title) · \(store.formattedTime()) · \(open)"
     }

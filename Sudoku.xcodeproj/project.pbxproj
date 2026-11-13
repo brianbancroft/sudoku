@@ -16,6 +16,9 @@
 		A0000000000000000000006F /* BoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000006E /* BoardView.swift */; };
 		A00000000000000000000071 /* NumberPadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000070 /* NumberPadView.swift */; };
 		A00000000000000000000073 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000072 /* SettingsView.swift */; };
+		A000000000000000000000C1 /* PackModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000000000000000000000C0 /* PackModels.swift */; };
+		A000000000000000000000C3 /* PackStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000000000000000000000C2 /* PackStore.swift */; };
+		A000000000000000000000C5 /* PacksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000000000000000000000C4 /* PacksView.swift */; };
 		A00000000000000000000075 /* Grid.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000074 /* Grid.swift */; };
 		A00000000000000000000077 /* SplitMix64.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000076 /* SplitMix64.swift */; };
 		A00000000000000000000079 /* Solver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000078 /* Solver.swift */; };
@@ -53,6 +56,10 @@
 		A0000000000000000000006E /* BoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardView.swift; sourceTree = "<group>"; };
 		A00000000000000000000070 /* NumberPadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberPadView.swift; sourceTree = "<group>"; };
 		A00000000000000000000072 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A000000000000000000000C0 /* PackModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackModels.swift; sourceTree = "<group>"; };
+		A000000000000000000000C2 /* PackStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackStore.swift; sourceTree = "<group>"; };
+		A000000000000000000000C4 /* PacksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PacksView.swift; sourceTree = "<group>"; };
+		A000000000000000000000C6 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
 		A00000000000000000000074 /* Grid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Grid.swift; sourceTree = "<group>"; };
 		A00000000000000000000076 /* SplitMix64.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplitMix64.swift; sourceTree = "<group>"; };
 		A00000000000000000000078 /* Solver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Solver.swift; sourceTree = "<group>"; };
@@ -115,6 +122,10 @@
 				A0000000000000000000006E /* BoardView.swift */,
 				A00000000000000000000070 /* NumberPadView.swift */,
 				A00000000000000000000072 /* SettingsView.swift */,
+				A000000000000000000000C0 /* PackModels.swift */,
+				A000000000000000000000C2 /* PackStore.swift */,
+				A000000000000000000000C4 /* PacksView.swift */,
+				A000000000000000000000C6 /* Products.storekit */,
 				A0000000000000000000001D /* Assets.xcassets */,
 				A0000000000000000000001F /* Info.plist */,
 			);
@@ -262,6 +273,9 @@
 				A0000000000000000000006F /* BoardView.swift in Sources */,
 				A00000000000000000000071 /* NumberPadView.swift in Sources */,
 				A00000000000000000000073 /* SettingsView.swift in Sources */,
+				A000000000000000000000C1 /* PackModels.swift in Sources */,
+				A000000000000000000000C3 /* PackStore.swift in Sources */,
+				A000000000000000000000C5 /* PacksView.swift in Sources */,
 				A00000000000000000000075 /* Grid.swift in Sources */,
 				A00000000000000000000077 /* SplitMix64.swift in Sources */,
 				A00000000000000000000079 /* Solver.swift in Sources */,

@@ -104,6 +104,9 @@ struct GameView: View {
     private var statusTitle: String {
         guard let game = store.game else { return "New puzzle" }
         let open = game.remainingCells == 1 ? "1 cell open" : "\(game.remainingCells) cells open"
+        if let pack = store.packContext {
+            return "\(pack.packName) · \(pack.puzzleTitle) · \(open)"
+        }
         return "\(game.puzzle.difficulty.title) · \(open)"
     }
 
@@ -146,7 +149,7 @@ struct GameView: View {
                     .font(.body.weight(.semibold))
                     .frame(width: 44, height: 44)
             }
-            .accessibilityLabel("Home")
+            .accessibilityLabel("Back")
         }
         ToolbarItem(placement: .principal) {
             TimelineView(.periodic(from: .now, by: 1)) { context in

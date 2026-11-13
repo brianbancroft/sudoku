@@ -29,11 +29,45 @@ enum MistakeChecking: String, Codable, CaseIterable, Identifiable {
     }
 }
 
-struct Settings: Codable, Equatable {
+struct Settings: Equatable {
     var mistakes: MistakeChecking = .conflicts
     var hintsEnabled = true
     var highlightSameNumber = true
     var highlightHouses = true
+    var packServerURL = "http://127.0.0.1:8787"
+
+    init() {}
+}
+
+extension Settings: Codable {
+    enum CodingKeys: String, CodingKey {
+        case mistakes, hintsEnabled, highlightSameNumber, highlightHouses, packServerURL
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        mistakes = try container.decodeIfPresent(MistakeChecking.self, forKey: .mistakes) ?? .conflicts
+        hintsEnabled = try container.decodeIfPresent(Bool.self, forKey: .hintsEnabled) ?? true
+        highlightSameNumber = try container.decodeIfPresent(Bool.self, forKey: .highlightSameNumber) ?? true
+        highlightHouses = try container.decodeIfPresent(Bool.self, forKey: .highlightHouses) ?? true
+        packServerURL = try container.decodeIfPresent(String.self, forKey: .packServerURL) ?? "http://127.0.0.1:8787"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(mistakes, forKey: .mistakes)
+        try container.encode(hintsEnabled, forKey: .hintsEnabled)
+        try container.encode(highlightSameNumber, forKey: .highlightSameNumber)
+        try container.encode(highlightHouses, forKey: .highlightHouses)
+        try container.encode(packServerURL, forKey: .packServerURL)
+    }
+}
+
+struct PackPuzzleContext: Codable, Equatable {
+    var packID: String
+    var packName: String
+    var puzzleID: String
+    var puzzleTitle: String
 }
 
 enum PlayBanner: Equatable {
@@ -52,15 +86,22 @@ final class GameStore {
     var banner: PlayBanner?
     var elapsed: TimeInterval = 0
     var userPaused = false
-    var showGame = false
+    var path: [AppRoute] = []
     var showSettings = false
     var confirmNewGame = false
+    var confirmPackPlay = false
     var isGenerating = false
     var moveCount = 0
+    var packContext: PackPuzzleContext?
 
     private var runningSince: Date?
     private var pendingDifficulty: Difficulty
+    private var pendingPack: (puzzle: DownloadedPuzzle, packName: String, packID: String)?
     private let persists: Bool
+
+    var isGameVisible: Bool {
+        path.contains(.game)
+    }
 
     init() {
         persists = true
@@ -76,6 +117,7 @@ final class GameStore {
                 self.selection = selection
             }
             pencilMode = snapshot?.pencilMode ?? false
+            packContext = snapshot?.packContext
         }
     }
 
@@ -85,7 +127,7 @@ final class GameStore {
         lastDifficulty = puzzle.difficulty
         pendingDifficulty = puzzle.difficulty
         game = SudokuGame(puzzle: puzzle)
-        showGame = true
+        path = [.game]
         elapsed = 72
         runningSince = Date()
         selection = nil
@@ -94,7 +136,7 @@ final class GameStore {
     var hasWon: Bool { game?.isWon == true }
 
     var showsPause: Bool {
-        userPaused && game?.isWon != true && showGame
+        userPaused && game?.isWon != true && isGameVisible
     }
 
     func displayedElapsed(at date: Date = .now) -> TimeInterval {
@@ -156,15 +198,48 @@ final class GameStore {
 
     func openCurrentGame() {
         guard game != nil, !isGenerating else { return }
-        showGame = true
+        if !path.contains(.game) {
+            path = [.game]
+        }
         resumeIfAllowed()
     }
 
     func leaveGame() {
+        noteGameClosed()
+        path.removeAll { $0 == .game }
+    }
+
+    func noteGameClosed() {
         foldTime(stopping: true)
-        showGame = false
         banner = nil
         persistIfNeeded()
+    }
+
+    func requestPackPuzzle(_ puzzle: DownloadedPuzzle, packID: String, packName: String) {
+        pendingPack = (puzzle, packName, packID)
+        if let game, !game.isWon {
+            confirmPackPlay = true
+        } else {
+            beginPendingPack()
+        }
+    }
+
+    func beginPendingPack() {
+        guard let pending = pendingPack else { return }
+        confirmPackPlay = false
+        let puzzle = SudokuPuzzle(
+            givens: pending.puzzle.givens,
+            solution: pending.puzzle.solution,
+            difficulty: pending.puzzle.difficulty,
+            seed: 0
+        )
+        install(puzzle, pack: PackPuzzleContext(
+            packID: pending.packID,
+            packName: pending.packName,
+            puzzleID: pending.puzzle.id,
+            puzzleTitle: pending.puzzle.title
+        ))
+        pendingPack = nil
     }
 
     func select(_ index: Int) {
@@ -254,7 +329,7 @@ final class GameStore {
     func handleScenePhase(_ phase: ScenePhase) {
         switch phase {
         case .active:
-            if showGame { resumeIfAllowed() }
+            if isGameVisible { resumeIfAllowed() }
         case .inactive, .background:
             foldTime(stopping: true)
             persistIfNeeded()
@@ -311,8 +386,9 @@ final class GameStore {
         return !game.isGiven(selection)
     }
 
-    private func install(_ puzzle: SudokuPuzzle) {
+    private func install(_ puzzle: SudokuPuzzle, pack: PackPuzzleContext? = nil) {
         game = SudokuGame(puzzle: puzzle)
+        packContext = pack
         selection = nil
         pencilMode = false
         banner = nil
@@ -320,7 +396,9 @@ final class GameStore {
         runningSince = Date()
         userPaused = false
         isGenerating = false
-        showGame = true
+        if !path.contains(.game) {
+            path.append(.game)
+        }
         moveCount += 1
         persistIfNeeded()
     }
@@ -336,7 +414,7 @@ final class GameStore {
     }
 
     private func resumeIfAllowed() {
-        guard showGame, !userPaused, game?.isWon != true, runningSince == nil else { return }
+        guard isGameVisible, !userPaused, game?.isWon != true, runningSince == nil else { return }
         runningSince = Date()
     }
 
@@ -358,7 +436,8 @@ final class GameStore {
             selection: selection,
             pencilMode: pencilMode,
             settings: settings,
-            lastDifficulty: lastDifficulty
+            lastDifficulty: lastDifficulty,
+            packContext: packContext
         )
         guard let data = try? JSONEncoder().encode(snapshot) else { return }
         UserDefaults.standard.set(data, forKey: Self.storageKey)
@@ -380,6 +459,10 @@ final class GameStore {
 }
 
 private struct Snapshot: Codable {
+    private enum CodingKeys: String, CodingKey {
+        case version, savedGame, elapsed, userPaused, selection, pencilMode, settings, lastDifficulty, packContext
+    }
+
     var version: Int
     var savedGame: SavedGame?
     var elapsed: TimeInterval
@@ -388,4 +471,53 @@ private struct Snapshot: Codable {
     var pencilMode: Bool
     var settings: Settings
     var lastDifficulty: Difficulty
+    var packContext: PackPuzzleContext?
+
+    init(
+        version: Int,
+        savedGame: SavedGame?,
+        elapsed: TimeInterval,
+        userPaused: Bool,
+        selection: Int?,
+        pencilMode: Bool,
+        settings: Settings,
+        lastDifficulty: Difficulty,
+        packContext: PackPuzzleContext?
+    ) {
+        self.version = version
+        self.savedGame = savedGame
+        self.elapsed = elapsed
+        self.userPaused = userPaused
+        self.selection = selection
+        self.pencilMode = pencilMode
+        self.settings = settings
+        self.lastDifficulty = lastDifficulty
+        self.packContext = packContext
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        version = try container.decodeIfPresent(Int.self, forKey: .version) ?? 1
+        savedGame = try container.decodeIfPresent(SavedGame.self, forKey: .savedGame)
+        elapsed = try container.decodeIfPresent(TimeInterval.self, forKey: .elapsed) ?? 0
+        userPaused = try container.decodeIfPresent(Bool.self, forKey: .userPaused) ?? false
+        selection = try container.decodeIfPresent(Int.self, forKey: .selection)
+        pencilMode = try container.decodeIfPresent(Bool.self, forKey: .pencilMode) ?? false
+        settings = try container.decodeIfPresent(Settings.self, forKey: .settings) ?? Settings()
+        lastDifficulty = try container.decodeIfPresent(Difficulty.self, forKey: .lastDifficulty) ?? .medium
+        packContext = try container.decodeIfPresent(PackPuzzleContext.self, forKey: .packContext)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(version, forKey: .version)
+        try container.encodeIfPresent(savedGame, forKey: .savedGame)
+        try container.encode(elapsed, forKey: .elapsed)
+        try container.encode(userPaused, forKey: .userPaused)
+        try container.encodeIfPresent(selection, forKey: .selection)
+        try container.encode(pencilMode, forKey: .pencilMode)
+        try container.encode(settings, forKey: .settings)
+        try container.encode(lastDifficulty, forKey: .lastDifficulty)
+        try container.encodeIfPresent(packContext, forKey: .packContext)
+    }
 }

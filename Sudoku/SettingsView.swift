@@ -30,7 +30,19 @@ struct SettingsView: View {
             }
 
             Section {
-                Text("Puzzles are made on this phone and stay on this phone.")
+                TextField("Puzzle server", text: $store.settings.packServerURL)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .keyboardType(.URL)
+                    .accessibilityLabel("Puzzle server address")
+            } header: {
+                Text("Puzzle server")
+            } footer: {
+                Text("Pack downloads use this address. http is only allowed for this computer. Purchases stay in the App Store.")
+            }
+
+            Section {
+                Text("Free puzzles are made on this phone. Purchased packs are downloaded from the puzzle server and kept on this phone.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
