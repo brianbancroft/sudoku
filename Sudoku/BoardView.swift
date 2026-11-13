@@ -18,6 +18,7 @@ struct BoardView: View {
     var onSelect: (Int) -> Void
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         GeometryReader { proxy in
@@ -39,11 +40,13 @@ struct BoardView: View {
                     .allowsHitTesting(false)
             }
             .frame(width: side, height: side)
-            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: Radius.board, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: Radius.board, style: .continuous)
                     .strokeBorder(Palette.lineStrong, lineWidth: 2)
             }
+            .shadow(color: Color(red: 0.55, green: 0.16, blue: 0.32).opacity(0.12), radius: 18, y: 8)
+            .animation(reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.78), value: model.selection)
             .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
         }
         .aspectRatio(1, contentMode: .fit)

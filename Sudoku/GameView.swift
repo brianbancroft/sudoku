@@ -19,7 +19,7 @@ struct GameView: View {
                     .accessibilityHidden(store.showsPause || store.hasWon)
             }
         }
-        .background(Palette.canvas.ignoresSafeArea())
+        .background { BlushCanvas() }
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbar }
@@ -267,7 +267,7 @@ struct PauseOverlay: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.28)
+            Palette.ink.opacity(0.28)
                 .ignoresSafeArea()
             VStack(spacing: 16) {
                 Text("Paused")
@@ -298,12 +298,16 @@ struct WinOverlay: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.28)
+            Palette.ink.opacity(0.28)
                 .ignoresSafeArea()
+            PetalBloom()
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
             VStack(spacing: 14) {
                 Text("Complete")
                     .font(.system(.largeTitle, design: .serif).weight(.medium))
                     .foregroundStyle(Palette.ink)
+                    .accessibilityAddTraits(.isHeader)
                 Text(game.puzzle.difficulty.title)
                     .font(.headline)
                     .foregroundStyle(Palette.muted)
@@ -334,7 +338,7 @@ struct WinOverlay: View {
             }
             .padding(24)
             .frame(maxWidth: 380)
-            .background(Palette.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .background(Palette.card, in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             .padding(24)
         }
         .accessibilityAddTraits(.isModal)
@@ -345,6 +349,33 @@ struct WinOverlay: View {
         case 0: "No hints used."
         case 1: "1 hint used."
         default: "\(game.hintsUsed) hints used."
+        }
+    }
+}
+
+struct PetalBloom: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var bloomed = false
+
+    var body: some View {
+        if reduceMotion {
+            EmptyView()
+        } else {
+            ZStack {
+                ForEach(0..<10, id: \.self) { index in
+                    Capsule()
+                        .fill(index.isMultiple(of: 2) ? Palette.accent : Palette.hint)
+                        .frame(width: 9, height: 18)
+                        .offset(y: bloomed ? -120 - CGFloat(index % 3) * 22 : -10)
+                        .rotationEffect(.degrees(Double(index) * 36))
+                        .opacity(bloomed ? 0 : 0.85)
+                }
+            }
+            .onAppear {
+                withAnimation(.easeOut(duration: 1.15)) {
+                    bloomed = true
+                }
+            }
         }
     }
 }

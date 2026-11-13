@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Game</title>
+</head>
+<body>
+  <main class="screen" style="padding-top:54px">
+    <div class="nav">
+      <div style="width:44px">‹</div>
+      <div class="time">12:40</div>
+      <div>⚙ &nbsp; ❚❚</div>
+    </div>
+    <div class="meta">Medium · 47 cells open<span>Row 3, column 5</span></div>
+    <div class="board" id="board"></div>
+    <div class="tools">
+      <div class="tool on">Notes</div>
+      <div class="tool">Erase</div>
+      <div class="tool">Undo</div>
+      <div class="tool">Redo</div>
+      <div class="tool">Hint</div>
+    </div>
+    <div class="pad" id="pad"></div>
+  </main>
+  <script>
+    const grid = [
+      ["5","g"],["3","g"],["",""],["",""],["7","g"],["",""],["",""],["",""],["",""],
+      ["6","g"],["",""],["",""],["1","g"],["9","g"],["5","g"],["",""],["",""],["",""],
+      ["","n"],["9","g"],["8","g"],["",""],["","s"],["",""],["","e"],["6","g"],["",""],
+      ["8","g"],["",""],["",""],["",""],["6","g"],["",""],["",""],["",""],["3","g"],
+      ["4","g"],["",""],["",""],["8","g"],["",""],["3","g"],["",""],["",""],["1","g"],
+      ["7","g"],["",""],["",""],["",""],["2","g"],["",""],["",""],["",""],["6","g"],
+      ["",""],["6","g"],["",""],["",""],["",""],["",""],["2","g"],["8","g"],["",""],
+      ["",""],["",""],["",""],["4","g"],["1","g"],["9","g"],["",""],["",""],["5","g"],
+      ["",""],["",""],["",""],["",""],["8","g"],["",""],["",""],["7","b"],["9","g"]
+    ];
+    const board = document.getElementById("board");
+    const selected = 22;
+    const selRow = Math.floor(selected / 9), selCol = selected % 9;
+    grid.forEach(([value, kind], i) => {
+      const row = Math.floor(i / 9), col = i % 9;
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      const sameHouse = row === selRow || col === selCol || (Math.floor(row / 3) === Math.floor(selRow / 3) && Math.floor(col / 3) === Math.floor(selCol / 3));
+      if (kind === "g") cell.classList.add("given");
+      if (kind === "e") cell.classList.add("entry", "same");
+      if (kind === "s") cell.classList.add("sel");
+      else if (kind === "b") cell.classList.add("bad");
+      else if (sameHouse) cell.classList.add("rel");
+      if (kind === "n") {
+        cell.innerHTML = '<div class="notes"><span>1</span><span></span><b>4</b><span></span><span>6</span><span></span><span></span><span>8</span><span></span></div>';
+      } else if (kind === "e") {
+        cell.textContent = "4";
+      } else if (kind === "b") {
+        cell.textContent = "7";
+      } else {
+        cell.textContent = value;
+      }
+      board.appendChild(cell);
+    });
+    const counts = [4,6,5,3,2,4,5,3,6];
+    const pad = document.getElementById("pad");
+    for (let n = 1; n <= 9; n++) {
+      const key = document.createElement("div");
+      key.className = "key" + (n === 4 ? " on" : "");
+      key.innerHTML = n + "<small>" + counts[n-1] + "</small>";
+      pad.appendChild(key);
+    }
+  </script>
+</body>
+</html>

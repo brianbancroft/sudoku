@@ -84,4 +84,20 @@ swift run SudokuServer
 
 ## Settings
 
-Mistake checking can be off, limited to a digit repeated in a house, or compared with this puzzle's solution. Hints, same-digit highlighting, and house highlighting can each be turned off. Defaults mark house conflicts, leave hints on, and highlight related cells.
+Mistake checking can be off, limited to a digit repeated in a house, or compared with this puzzle's solution. Hints, same-digit highlighting, and house highlighting can each be turned off. Defaults mark house conflicts, leave hints on, and highlight related cells. Errors also draw a short bar under the digit, so the mark is not color alone.
+
+## Color
+
+The interface is blush and raspberry in both light and dark mode. Digits and controls were checked against WCAG 2.1 AA (4.5:1 for text). Measured pairs:
+
+| Pair | Light | Dark |
+| --- | --- | --- |
+| Given digits on the board | 13.6:1 | 12.9:1 |
+| Entered digits on the board | 8.1:1 | 9.8:1 |
+| Pencil marks on the board | 8.3:1 | 11.1:1 |
+| Secondary text on the page | 6.7:1 | 6.3:1 |
+| Button label on the raspberry button | 8.2:1 | 9.4:1 |
+| Error digit on the error wash | 7.4:1 | 8.3:1 |
+| Entered digit on the selection wash | 5.5:1 | 6.1:1 |
+
+The screen mockups live in `docs/design/`.

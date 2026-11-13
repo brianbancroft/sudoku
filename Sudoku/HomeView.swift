@@ -22,7 +22,7 @@ struct HomeView: View {
             }
             newGameButton
         }
-        .background(Palette.canvas.ignoresSafeArea())
+        .background { BlushCanvas() }
         .toolbar(.hidden, for: .navigationBar)
     }
 
@@ -152,7 +152,7 @@ struct HomeView: View {
             .background(Palette.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .strokeBorder(selected ? Palette.ink : Palette.line, lineWidth: selected ? 1.5 : 1)
+                    .strokeBorder(selected ? Palette.accent : Palette.line, lineWidth: selected ? 2 : 1)
             }
         }
         .buttonStyle(PressOpacityStyle())

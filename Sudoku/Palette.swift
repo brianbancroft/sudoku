@@ -2,24 +2,26 @@ import SwiftUI
 import UIKit
 
 enum Palette {
-    static let canvas = dynamic(light: 0xE7E0D4, dark: 0x100E0C)
-    static let board = dynamic(light: 0xFBF7F0, dark: 0x1B1815)
-    static let card = dynamic(light: 0xFBF7F0, dark: 0x221E1A)
-    static let ink = dynamic(light: 0x1C1612, dark: 0xF6F1E8)
-    static let entry = dynamic(light: 0x0E4F5C, dark: 0x8ED4DE)
-    static let muted = dynamic(light: 0x4E463C, dark: 0xC8BEB0, lightHigh: 0x2A241C, darkHigh: 0xFFFFFF)
-    static let note = dynamic(light: 0x3F382F, dark: 0xE4D9C8, lightHigh: 0x241C16, darkHigh: 0xFFFFFF)
-    static let line = dynamic(light: 0xD4CBBC, dark: 0x3C352C, lightHigh: 0x8A7F70, darkHigh: 0xB7AA9A)
-    static let lineStrong = dynamic(light: 0x2A241E, dark: 0xE8E0D4)
-    static let selection = dynamic(light: 0xF0D08A, dark: 0x4C3D24)
-    static let hint = dynamic(light: 0xE2B15A, dark: 0x6A5428)
-    static let related = dynamic(light: 0xF3EBDD, dark: 0x2A241E)
-    static let sameNumber = dynamic(light: 0xD5E4DE, dark: 0x1A2E2C)
-    static let conflictFill = dynamic(light: 0xF3D2CB, dark: 0x4A2C28)
-    static let conflictInk = dynamic(light: 0x7A241E, dark: 0xF3B8B0)
-    static let accent = dynamic(light: 0x0E4F5C, dark: 0xE4C48A)
-    static let primaryButton = dynamic(light: 0x1C1612, dark: 0xF3E6C8)
-    static let primaryButtonText = dynamic(light: 0xFBF7F0, dark: 0x1C1612)
+    static let canvasTop = dynamic(light: 0xFBEAF1, dark: 0x3A1C2A)
+    static let canvas = dynamic(light: 0xF6E4EC, dark: 0x2A1520)
+    static let board = dynamic(light: 0xFFF8FB, dark: 0x3A1E2C)
+    static let card = dynamic(light: 0xFFF6F9, dark: 0x432433)
+    static let ink = dynamic(light: 0x3A2430, dark: 0xFFE8F1)
+    static let entry = dynamic(light: 0x8E2348, dark: 0xFFC0D4)
+    static let muted = dynamic(light: 0x6B4454, dark: 0xC98BA0, lightHigh: 0x4A2C38, darkHigh: 0xFFE8F1)
+    static let note = dynamic(light: 0x6A3E50, dark: 0xF6D5E2, lightHigh: 0x3A2430, darkHigh: 0xFFFFFF)
+    static let line = dynamic(light: 0xE7C9D4, dark: 0x6A3A4E, lightHigh: 0x8E2348, darkHigh: 0xF3D5E0)
+    static let lineStrong = dynamic(light: 0x5C3144, dark: 0xF3D5E0)
+    static let selection = dynamic(light: 0xF4C3D4, dark: 0x6E3450)
+    static let hint = dynamic(light: 0xE892B0, dark: 0x8A4564)
+    static let related = dynamic(light: 0xFBE4EC, dark: 0x4A2838)
+    static let sameNumber = dynamic(light: 0xF6D0E0, dark: 0x5A3044)
+    static let conflictFill = dynamic(light: 0xF6D7CC, dark: 0x5A2E32)
+    static let conflictInk = dynamic(light: 0x7A2420, dark: 0xFFD4CC)
+    static let accent = dynamic(light: 0xB4235A, dark: 0xF0A0C0)
+    static let primaryButton = dynamic(light: 0x8E1E4A, dark: 0xF3B6CC)
+    static let primaryButtonText = dynamic(light: 0xFFF7FA, dark: 0x3A1524)
+    static let success = dynamic(light: 0x8E1E4A, dark: 0xF3B6CC)
 
     static func dynamic(
         light: UInt32,
@@ -37,6 +39,36 @@ enum Palette {
             }
             return UIColor(hex: hex)
         })
+    }
+}
+
+enum Radius {
+    static let card: CGFloat = 22
+    static let control: CGFloat = 18
+    static let key: CGFloat = 16
+    static let board: CGFloat = 18
+}
+
+enum Space {
+    static let screen: CGFloat = 24
+    static let stack: CGFloat = 16
+    static let tight: CGFloat = 8
+}
+
+enum Elevation {
+    static func card(_ content: some View) -> some View {
+        content.shadow(color: Color(red: 0.35, green: 0.12, blue: 0.22).opacity(0.08), radius: 16, y: 8)
+    }
+}
+
+struct BlushCanvas: View {
+    var body: some View {
+        LinearGradient(
+            colors: [Palette.canvasTop, Palette.canvas],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .ignoresSafeArea()
     }
 }
 
@@ -88,12 +120,12 @@ struct InkButtonStyle: ButtonStyle {
             .frame(maxWidth: .infinity, minHeight: 52)
             .foregroundStyle(prominent ? Palette.primaryButtonText : Palette.ink)
             .background {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                RoundedRectangle(cornerRadius: Radius.control, style: .continuous)
                     .fill(prominent ? Palette.primaryButton : Palette.card)
             }
             .overlay {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .strokeBorder(prominent ? Color.clear : Palette.ink, lineWidth: 1.5)
+                RoundedRectangle(cornerRadius: Radius.control, style: .continuous)
+                    .strokeBorder(prominent ? Color.clear : Palette.accent, lineWidth: 1.5)
             }
             .opacity(configuration.isPressed ? 0.82 : 1)
     }

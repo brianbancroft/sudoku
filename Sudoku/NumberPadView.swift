@@ -38,11 +38,11 @@ struct NumberPadView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: Radius.key, style: .continuous)
                     .fill(emphasized ? Palette.hint : Palette.card)
             }
             .overlay {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: Radius.key, style: .continuous)
                     .strokeBorder(emphasized ? Palette.ink : Palette.line, lineWidth: emphasized ? 2 : 1)
             }
         }
@@ -137,11 +137,11 @@ struct ToolRow: View {
             .foregroundStyle(isOn ? Palette.primaryButtonText : Palette.ink)
             .frame(maxWidth: .infinity, minHeight: 52)
             .background {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: Radius.key, style: .continuous)
                     .fill(isOn ? Palette.ink : Palette.card)
             }
             .overlay {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: Radius.key, style: .continuous)
                     .strokeBorder(isOn ? Color.clear : Palette.line, lineWidth: 1)
             }
         }

@@ -41,7 +41,7 @@ struct PacksView: View {
             .frame(maxWidth: 560)
             .frame(maxWidth: .infinity)
         }
-        .background(Palette.canvas.ignoresSafeArea())
+        .background { BlushCanvas() }
         .navigationTitle("Puzzle packs")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.visible, for: .navigationBar)
@@ -157,7 +157,7 @@ struct PackDetailView: View {
             .frame(maxWidth: 560)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(Palette.canvas.ignoresSafeArea())
+        .background { BlushCanvas() }
         .navigationTitle(listing?.name ?? "Pack")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.visible, for: .navigationBar)
