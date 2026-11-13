@@ -1,0 +1,38 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "sudoku-packs",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-13",
+  "observability": {
+    "enabled": true,
+    "traces": {
+      "enabled": true
+    }
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "sudoku-packs",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "BUNDLE_ID": "com.brianbancroft.sudoku",
+    "PUBLIC_BASE_URL": "https://sudoku-packs.example.workers.dev",
+    "ALLOW_XCODE_JWS": "false",
+    "APPLE_ROOT_CA_PEM": ""
+  },
+  "secrets": {
+    "required": [
+      "SESSION_SECRET",
+      "ADMIN_EMAILS",
+      "GOOGLE_CLIENT_ID",
+      "GOOGLE_CLIENT_SECRET",
+      "APPLE_SERVICES_ID",
+      "APPLE_TEAM_ID",
+      "APPLE_KEY_ID",
+      "APPLE_PRIVATE_KEY"
+    ]
+  }
+}

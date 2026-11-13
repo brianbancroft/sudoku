@@ -34,7 +34,7 @@ struct Settings: Equatable {
     var hintsEnabled = true
     var highlightSameNumber = true
     var highlightHouses = true
-    var packServerURL = "http://127.0.0.1:8787"
+    var packServerURL = ServerBaseURL.fallback
 
     init() {}
 }
@@ -50,7 +50,7 @@ extension Settings: Codable {
         hintsEnabled = try container.decodeIfPresent(Bool.self, forKey: .hintsEnabled) ?? true
         highlightSameNumber = try container.decodeIfPresent(Bool.self, forKey: .highlightSameNumber) ?? true
         highlightHouses = try container.decodeIfPresent(Bool.self, forKey: .highlightHouses) ?? true
-        packServerURL = try container.decodeIfPresent(String.self, forKey: .packServerURL) ?? "http://127.0.0.1:8787"
+        packServerURL = try container.decodeIfPresent(String.self, forKey: .packServerURL) ?? ServerBaseURL.fallback
     }
 
     func encode(to encoder: Encoder) throws {

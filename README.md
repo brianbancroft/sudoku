@@ -31,11 +31,21 @@ The puzzle engine has no UI dependency. From the repository root:
 swift test
 ```
 
-That covers unique generation, validation, pencil marks, undo and redo, hints, pack puzzles, and the pack server. In Xcode, Product > Test runs the game tests inside the `SudokuTests` target. `swift test` also runs `SudokuServerTests`.
+That covers unique generation, validation, pencil marks, undo and redo, and hints. In Xcode, Product > Test runs the game tests inside the `SudokuTests` target.
+
+The pack Worker has its own tests:
+
+```sh
+cd cloudflare
+npm install
+npm test
+```
+
+Those run in the Workers runtime. They check a fixture certificate chain (a throwaway test CA, not an Apple key), a purchase that unlocks a pack, and that `/admin` rejects a request with no session.
 
 ## Layout
 
-`Sources/SudokuEngine` is the game. It owns the grid, the exact solver, the logical solver used for difficulty and hints, the generator, and the rules for notes, undo, and reveal. `Sudoku` is the SwiftUI app: screens, timer, and the saved game. The two stay apart so the rules can be tested without launching the interface.
+`Sources/SudokuEngine` is the game. It owns the grid, the exact solver, the logical solver used for difficulty and hints, the generator, and the rules for notes, undo, and reveal. `Sudoku` is the SwiftUI app: screens, timer, and the saved game. `cloudflare/` is the Worker that checks a StoreKit signature and sends a purchased pack. The engine stays separate so the rules can be tested without launching the interface or the Worker.
 
 Difficulty follows the hardest step the logical solver actually needs:
 
@@ -52,35 +62,85 @@ Packs are digital content, so the app uses StoreKit 2. There is no Stripe checko
 
 The scheme points at `Sudoku/Products.storekit`. In Xcode, run on an iPhone simulator and the store uses those local products. No real charge is made.
 
-1. Start the pack server (below) on the Mac.
-2. Run the app. The simulator reaches the Mac at `http://127.0.0.1:8787`.
+1. In `cloudflare/`, run `npx wrangler dev --port 8787`. Copy `.dev.vars.example` to `.dev.vars` first and set `ALLOW_XCODE_JWS=true`, or the simulator's StoreKit configuration signature is rejected.
+2. Run the app from Xcode on an iPhone simulator. The Debug build setting `SUDOKU_PACK_SERVER_URL` is `http://127.0.0.1:8787`.
 3. Open Puzzle packs, buy Quiet Start, Hard Lines, or Long Night, and choose a puzzle.
 4. Restore purchases asks StoreKit for entitlements already on this Apple ID, then downloads any pack that is not on the phone yet.
 
-If the server is down, a pack that is already downloaded still opens. StoreKit remains the record of ownership. A purchase that has not downloaded yet stays unfinished until the server can deliver it, and `Transaction.updates` tries again. Change the server address in Settings. `http` is only accepted for `127.0.0.1` and `localhost`.
+If the Worker is down, a pack that is already downloaded still opens. StoreKit remains the record of ownership. A purchase that has not downloaded yet stays unfinished until the Worker can deliver it, and `Transaction.updates` tries again. Change the server address in Settings. `http` is only accepted for `127.0.0.1` and `localhost`.
 
-### Pack server
+The Release build setting points at `https://sudoku-packs.example.workers.dev`. Replace that with the hostname `wrangler deploy` prints before you install a Release build on a phone. The address is also in Settings after the first launch, and a value already saved on the phone is kept.
 
-The server is a small Swift program in `Server/`. It is not Vapor or Hummingbird: four JSON routes do not need that stack, and the tests run with the same toolchain as the engine. It does not take payment. It checks the signed StoreKit transaction and then sends the puzzles.
+### Pack Worker
+
+`cloudflare/` is the pack server. It is a TypeScript Worker with one D1 database. It does not take payment. It checks the signed StoreKit transaction and then sends the puzzles. The admin pages are on the same Worker. Why the Swift process is gone is written in `docs/adr/0001-pack-server-on-cloudflare.md`.
+
+Deploy, once, from `cloudflare/`. This does not run itself. You need a Cloudflare account you control.
 
 ```sh
-swift test --filter SudokuServerTests
-swift run SudokuServer
+cd cloudflare
+npm install
+npx wrangler login
+npx wrangler d1 create sudoku-packs
 ```
 
-`swift run` listens on `http://127.0.0.1:8787`. `PORT` changes the port. Granted transactions are recorded in `data/entitlements.json`, which is gitignored.
+Copy the `database_id` from that command into `d1_databases` in `wrangler.jsonc`. The file ships with `00000000-0000-0000-0000-000000000000` so the repo has no account id.
 
-`SUDOKU_IAP_MODE` defaults to `dev`. Dev mode accepts Xcode StoreKit configuration transactions (`"environment":"Xcode"`) after checking the JWS shape, bundle id `com.brianbancroft.sudoku`, a known product id, and that the purchase is not revoked. That is not Apple's production signature. Do not put this process on the public internet.
+```sh
+npx wrangler d1 migrations apply sudoku-packs --remote
+npx wrangler secret put SESSION_SECRET
+npx wrangler secret put ADMIN_EMAILS
+npx wrangler secret put GOOGLE_CLIENT_ID
+npx wrangler secret put GOOGLE_CLIENT_SECRET
+npx wrangler secret put APPLE_SERVICES_ID
+npx wrangler secret put APPLE_TEAM_ID
+npx wrangler secret put APPLE_KEY_ID
+npx wrangler secret put APPLE_PRIVATE_KEY
+```
 
-`SUDOKU_IAP_MODE=production` rejects Xcode transactions and refuses Sandbox and Production transactions until verification is configured outside the repo. No Apple key is committed.
+Set `PUBLIC_BASE_URL` in `wrangler.jsonc` to the `https://….workers.dev` host you are about to deploy, with no trailing slash. Then:
+
+```sh
+npx wrangler deploy
+```
+
+`ADMIN_EMAILS` is a comma-separated list, for example `you@gmail.com`. `SESSION_SECRET` is a random string of at least 32 characters. `APPLE_PRIVATE_KEY` is the Sign in with Apple `.p8`, pasted with its `BEGIN` and `END` lines. Locally, the same names go in `.dev.vars`, copied from `.dev.vars.example`. Do not commit `.dev.vars`.
+
+Leave `ALLOW_XCODE_JWS` as `"false"` in `wrangler.jsonc`. A deployed Worker checks the JWS certificate chain against Apple Root CA - G3, then checks `bundleId` `com.brianbancroft.sudoku` and that the product id is one of the packs. Xcode's StoreKit configuration file is not signed by Apple, so simulator purchases work only while `wrangler dev` is running with `ALLOW_XCODE_JWS=true` in `.dev.vars`.
+
+#### Google sign-in for the admin page
+
+In Google Cloud, create an OAuth client of type Web application. You do not need a Google Cloud project id in this repo.
+
+- Authorized redirect URI for the deployed Worker: `https://<worker-host>/admin/oauth/google/callback`
+- For `wrangler dev` on this computer, also add `http://127.0.0.1:8787/admin/oauth/google/callback`
+
+Put the client id and secret in the two Google secrets above. Open `https://<worker-host>/admin/login`. The Google account's email has to be listed in `ADMIN_EMAILS`, and Google has to say the email is verified.
+
+#### Sign in with Apple for the admin page
+
+This is a web Services ID for the admin page. It is not the iPhone app's signing team, and the Xcode project stays without a team id.
+
+In the Apple Developer account, create a Services ID with Sign in with Apple, a Sign in with Apple key, and note the team id and key id.
+
+- Return URL: `https://<worker-host>/admin/oauth/apple/callback`
+- Domains and subdomains: the Worker hostname, without `https://`
+- For local admin sign-in, Apple requires an HTTPS return URL, so use the deployed Worker rather than `wrangler dev` for Apple. Google works on localhost.
+
+`APPLE_SERVICES_ID` is the Services ID (it looks like a reverse-DNS identifier). `APPLE_TEAM_ID` is the 10-character team id. `APPLE_KEY_ID` is the key id. `APPLE_PRIVATE_KEY` is that key's `.p8`. None of these belong in the iOS target.
+
+#### Point the app at the Worker
+
+- Simulator: Debug already uses `http://127.0.0.1:8787`. Run `npx wrangler dev --port 8787` with `ALLOW_XCODE_JWS=true`.
+- Phone: set the Release build setting `SUDOKU_PACK_SERVER_URL` to `https://<worker-host>`, or type that address into Settings. `Info.plist` reads the build setting into `SudokuPackServerURL`.
 
 ### What real App Store sales need later
 
 - An Apple Developer Program membership, a signing team chosen only on your Mac, and a bundle id that matches `com.brianbancroft.sudoku`.
 - Paid Apps agreement, tax, and banking in App Store Connect.
 - Three non-consumable products with the same ids as `Products.storekit`: `com.brianbancroft.sudoku.pack.starter`, `com.brianbancroft.sudoku.pack.hard`, and `com.brianbancroft.sudoku.pack.expert`.
-- A hosted copy of this server with `SUDOKU_IAP_MODE=production`. Verify each JWS with Apple's App Store Server API (Get Transaction Info), using an issuer id, a key id, and a `.p8` that stays out of the repo. Or check the certificate chain in the JWS against Apple Root CA - G3.
-- The phone's Settings field pointed at that `https` host.
+- The Worker deployed as above, with `ALLOW_XCODE_JWS` left false. Production and Sandbox transactions are verified from the JWS `x5c` chain to Apple Root CA - G3. No App Store Server API key is required for that check.
+- The phone pointed at that `https` host.
 
 ## Settings
 

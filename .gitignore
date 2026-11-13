@@ -8,3 +8,7 @@ xcuserdata/
 *.xcscmblueprint
 *.moved-aside
 Server/data/
+cloudflare/node_modules/
+cloudflare/.dev.vars
+cloudflare/.wrangler/
+cloudflare/dist/

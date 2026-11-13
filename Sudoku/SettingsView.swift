@@ -38,7 +38,7 @@ struct SettingsView: View {
             } header: {
                 Text("Puzzle server")
             } footer: {
-                Text("Pack downloads use this address. http is only allowed for this computer. Purchases stay in the App Store.")
+                Text("Pack downloads use this address. A simulator uses http://127.0.0.1:8787 while wrangler dev is running. A phone uses the https workers.dev address. Purchases stay in the App Store.")
             }
 
             Section {

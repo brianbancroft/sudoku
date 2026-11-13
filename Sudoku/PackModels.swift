@@ -59,7 +59,18 @@ enum PackProduct {
 }
 
 enum ServerBaseURL {
-    static let fallback = "http://127.0.0.1:8787"
+    /// Placeholder until the Worker hostname from `wrangler deploy` is pasted into the Release build setting.
+    static let placeholder = "https://sudoku-packs.example.workers.dev"
+    static let local = "http://127.0.0.1:8787"
+
+    /// `SudokuPackServerURL` comes from Info.plist. Debug builds substitute localhost. Release builds substitute the workers.dev placeholder.
+    static var fallback: String {
+        if let configured = Bundle.main.object(forInfoDictionaryKey: "SudokuPackServerURL") as? String,
+           let normalized = normalized(configured) {
+            return normalized
+        }
+        return placeholder
+    }
 
     /// http is only allowed for this computer. https is allowed for a pack server you host later.
     /// This never accepts a payment URL.
